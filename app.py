@@ -7,25 +7,28 @@ import os
 st.set_page_config(page_title="Momentum", page_icon="🚀", layout="wide")
 st.title("🚀 Momentum")
 
-# File for persistence
+# File for persistence (local testing; cloud uses session state)
 DATA_FILE = "momentum_data.json"
 
-# Load data from file (always on startup/refresh)
+# Load data from file (local) or session state (cloud)
 def load_data():
+    if 'todo_tasks' not in st.session_state:
+        st.session_state.todo_tasks = []
+        st.session_state.doing_tasks = []
+        st.session_state.done_tasks = []
+    if os.getenv('STREAMLIT_CLOUD'):  # Cloud mode
+        return
     if os.path.exists(DATA_FILE):
         with open(DATA_FILE, 'r') as f:
             data = json.load(f)
             st.session_state.todo_tasks = data.get('todo', [])
             st.session_state.doing_tasks = data.get('doing', [])
             st.session_state.done_tasks = data.get('done', [])
-            st.info(f"Loaded {len(st.session_state.todo_tasks) + len(st.session_state.doing_tasks) + len(st.session_state.done_tasks)} tasks from file!")
+            st.info(f"Loaded {len(st.session_state.todo_tasks) + len(st.session_state.doing_tasks) + len(st.session_state.done_tasks)} tasks!")
     else:
-        st.session_state.todo_tasks = []
-        st.session_state.doing_tasks = []
-        st.session_state.done_tasks = []
         st.info("New session—add your first task!")
 
-load_data() # Always load on run/refresh
+load_data()
 
 # Helper to generate timestamp
 def get_timestamp():
@@ -62,15 +65,16 @@ def add_task():
     save_data()
     st.rerun()
 
-# Save data to file
+# Save data to file (local) or session state (cloud)
 def save_data():
     data = {
         'todo': st.session_state.todo_tasks,
         'doing': st.session_state.doing_tasks,
         'done': st.session_state.done_tasks
     }
-    with open(DATA_FILE, 'w') as f:
-        json.dump(data, f)
+    if not os.getenv('STREAMLIT_CLOUD'):  # Local mode
+        with open(DATA_FILE, 'w') as f:
+            json.dump(data, f)
 
 # Tabs
 tab1, tab2, tab3 = st.tabs(["📝 To Do", "⚡ Doing", "✅ Done"])
