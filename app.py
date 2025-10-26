@@ -67,6 +67,7 @@ def add_task():
 
 # Save data to file (local) or session state (cloud)
 def save_data():
+
     data = {
         'todo': st.session_state.todo_tasks,
         'doing': st.session_state.doing_tasks,
